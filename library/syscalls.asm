@@ -91,6 +91,18 @@ EXIT_FAILURE    equ 1
     syscall                         ; execute
 %endmacro
 
+; DEFINE_STR <label>, <string>
+;
+; Defines a string in the data section with a corresponding length label.
+; @note This must be used in the data section of the assembly code, not in the text section.
+;
+; @param label: The label for the string
+; @param string: The string to define
+; @returns: This macro does not return a value; it defines a string and its length in the data section.
+%macro DEFINE_STR 2+
+    %1: db %2
+    %1_len: equ $ - %1
+%endmacro
 
 
 %endif; SYSCALLS_ASM
