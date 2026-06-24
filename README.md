@@ -2,6 +2,12 @@
 
 ## Development
 
+### "Standard Library"
+
+I have a makeshift "standard library" for assembly: https://github.com/Shresht7/Learning-Assembly
+
+The code in the [`library`](./library/) folder has been copy-pasted from there.
+
 ### Build
 
 ```sh
