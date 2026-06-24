@@ -1,9 +1,12 @@
+%include "src/core/radix.asm"
 %include "src/linux/syscall.asm"
 
 section .data
-    msg db "usage: based <value>", 10       ; message to print, followed by a newline character
-    msg_len equ $ - msg                     ; calculate the length of the message. `$` means current address, so `$ - msg` gives the length of the message in bytes
-    newline db 10                           ; newline character
+    msg db "usage: based <value>", 10               ; message to print, followed by a newline character
+    msg_len equ $ - msg                             ; calculate the length of the message. `$` means current address, so `$ - msg` gives the length of the message in bytes
+    parse_err_msg db "error: invalid input", 10     ; error message for invalid input, followed by a newline character
+    parse_err_msg_len equ $ - parse_err_msg         ; calculate the length of the error message
+    newline db 10                                   ; newline character
 
 section .text
 ; The main entry-point of the program
@@ -16,12 +19,25 @@ _start:
     cmp rax, 2          ; need at least 2 arguments (program name + one argument)
     jl .usage           ; if less than 2, jump to usage message
 
-    PRINT [rsp+16]      ; print the first argument (argv[1])
-    PRINT newline       ; print a newline character
+    mov rdi, [rsp+16]       ; load the pointer to the first argument (argv[1]) into rdi
+    call parse_decimal      ; parse the first argument (argv[1]) as a decimal number, result in rax
+    test rdx, rdx           ; check the status returned by parse_decimal (rdx = 0 means success, rdx = 1 means invalid input)
+    jnz .parse_error        ; if rdx is not zero, jump to parse_error
 
-    EXIT SUCCESS        ; exit the program with success code
+    ; Exit with decimal for testing
+    mov rdi, rax        ; move the parsed value into rdi for exit status
+    mov rax, SYS_EXIT     ; syscall number for exit
+    syscall             ; invoke the syscall to exit with the parsed value
+
+    ; PRINT [rsp+16]      ; print the first argument (argv[1])
+    ; PRINT newline       ; print a newline character
+
+    ; EXIT SUCCESS        ; exit the program with success code
 
 .usage:
     PRINT msg           ; print the usage message
     EXIT FAILURE        ; exit the program with failure code
 
+.parse_error:
+    PRINT parse_err_msg ; print the parse error message
+    EXIT FAILURE        ; exit the program with failure code
