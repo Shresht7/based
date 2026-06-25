@@ -19,11 +19,11 @@ section .data
     DEFINE_STR test_parse_overflow_str, "18446744073709551616", 0       ; Define a null-terminated test string for parse_uint that causes overflow (2^64)
     DEFINE_STR test_parse_max_uint64_str, "18446744073709551615", 0     ; Define a null-terminated test string for parse_uint that is the maximum uint64 value (2^64 - 1)
 
-    DEFINE_STR test_detect_base_decimal, "75", 0            ; Define a normal decimal string for detect_base
+    DEFINE_STR test_detect_base_unspecified, "75", 0        ; Define a string for detect_base with unspecified base
     DEFINE_STR test_detect_base_hexadecimal, "0xAF", 0      ; Define a hexadecimal string for detect_base
     DEFINE_STR test_detect_base_octal, "0o755", 0           ; Define a octal string for detect_base
     DEFINE_STR test_detect_base_binary, "0b11011", 0        ; Define a binary string for detect_base
-    DEFINE_STR test_detect_base_decimal_unprefixed, "75", 0
+    DEFINE_STR test_detect_base_unspecified_unprefixed, "75", 0
     DEFINE_STR test_detect_base_hexadecimal_unprefixed, "AF", 0
     DEFINE_STR test_detect_base_octal_unprefixed, "755", 0
     DEFINE_STR test_detect_base_binary_unprefixed, "11011", 0
@@ -155,10 +155,11 @@ _start:
     ; -----------
 
     TESTCASE "detect_base should be able to detect the base!"
-        mov rdi, test_detect_base_decimal
+        mov r8, rsi
+        mov rdi, test_detect_base_unspecified
         call detect_base
-        ASSERT_EQ rsi, 10, "should detect normal decimal strings"
-        ASSERT_STR_EQ rdi, test_detect_base_decimal_unprefixed, "should not advance the string pointer as there is no prefix"
+        ASSERT_EQ rsi, r8, "should not change the base as there is no prefix"
+        ASSERT_STR_EQ rdi, test_detect_base_unspecified_unprefixed, "should not advance the string pointer as there is no prefix"
 
         mov rdi, test_detect_base_hexadecimal
         call detect_base

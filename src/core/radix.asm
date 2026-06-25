@@ -19,8 +19,7 @@ section .text
         je .is_octal                ; the string is in octal representation
         cmp cx, '0b'                ; If the prefix is '0b'
         je .is_binary               ; the string is in binary representation
-        ; If none of the above match, we assume no prefix / decimal number
-        jmp .is_decimal
+        jmp .no_match               ; If none of the above match, 
 
         .is_hexadecimal:
             mov rsi, 16             ; Override base to be 16
@@ -37,8 +36,14 @@ section .text
             add rdi, 2              ; Advance the pointer forward skipping the '0b' prefix
             ret
 
-        .is_decimal:
-            mov rsi, 10             ; Override the base to 10
+        .no_match:
+            ; mov rsi, 10             ; Override the base to 10
+            ; No need to advance the pointer since there's no prefix
+
+            ; If none of the above match, there is no prefix.
+            ; In this case, the number may or may not be in decimal representation. We will leave the base as is (rsi) and let the caller handle it.
+            ; A value of 111 can be in base 2 and base 7 as well as base 10. If the caller explicitly asked for base 2 but did not provide a prefix
+            ; then we respect that choice and leave it be.
             ret
 
     ; parse_uint
