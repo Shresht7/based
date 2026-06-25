@@ -28,17 +28,17 @@ section .text
 
             ; Convert character to digit based on base
             cmp rcx, '0'
-            jb .invalid_char
+            jl .invalid_char
             cmp rcx, '9'
-            jbe .digit_0_9
+            jle .digit_0_9
             cmp rcx, 'A'
-            jb .invalid_char
+            jl .invalid_char
             cmp rcx, 'F'
-            jbe .digit_A_F
+            jle .digit_A_F
             cmp rcx, 'a'
-            jb .invalid_char
+            jl .invalid_char
             cmp rcx, 'f'
-            jbe .digit_a_f
+            jle .digit_a_f
             jmp .invalid_char
 
         .digit_0_9:
@@ -57,14 +57,14 @@ section .text
         
         .check_digit:
             cmp rcx, rsi            ; Check if digit is valid for the base
-            ja .invalid_char        ; If digit >= base, it's invalid
+            jge .invalid_char       ; If digit >= base, it's invalid
 
             ; Check for overflow before multiplying
             mov r9, rax             ; Store current result in r9
             mov r10, rsi            ; Store base in r10
             mul r10                 ; Multiply current result by base (rax = rax * base)
             cmp rax, r9             ; Check if overflow occurred (rax < previous result)
-            jb .overflow             ; If overflow, jump to error handling
+            jl .overflow             ; If overflow, jump to error handling
 
             add rax, rcx            ; Add the digit to the result
             inc r8                  ; Increment digit counter

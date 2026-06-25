@@ -68,7 +68,6 @@ _start:
         mov rsi, 8
         call parse_uint
         ASSERT_EQ rdx, 1, "should return error code 1 for invalid character '8' in '78'"
-        ; TODO: Fails because the current implementation doesn't check the digit against the base. Need to add a check for valid digits based on the base.
 
     ; parse_uint binary
     ; -----------------
@@ -83,7 +82,6 @@ _start:
         mov rsi, 2
         call parse_uint
         ASSERT_EQ rdx, 1, "should return error code 1 for invalid character '2' in '1102'"
-        ; TODO: Fails because the current implementation doesn't check the digit against the base. Need to add a check for valid digits based on the base.
 
     ; parse_uint overflow
     ; -------------------
