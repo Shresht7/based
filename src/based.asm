@@ -1,4 +1,6 @@
 %include "library/syscalls.asm"
+%include "library/strutils.asm"
+%include "library/stdio.asm"
 %include "src/core/radix.asm"
 
 section .data
@@ -8,33 +10,127 @@ section .data
     parse_err_msg db "error: invalid input", 10     ; error message for invalid input, followed by a newline character
     parse_err_msg_len equ $ - parse_err_msg         ; calculate the length of the error message
 
+    flag_from   db "--from", 0
+    flag_to     db "--to", 0
+    flag_help   db "--help", 0
+
+    arg_from_base   dq 10
+    arg_to_base     dq 2
+
     newline db 10                                   ; newline character
+
+section .bss
+    arg_value       resq 1
 
 section .text
 ; The main entry-point of the program
 global _start
 _start:
-    ; [rsp]             = argc
-    ; [rsp+8]           = argv[0] (program name)
-    ; [rsp+16]          = argv[1] (first argument)
-    mov rax, [rsp]      ; load argc into rax
-    cmp rax, 2          ; need at least 2 arguments (program name + one argument)
-    jl .usage           ; if less than 2, jump to usage message
+    mov r12, [rsp]                                  ; r12 = argc (number of command-line arguments)
+    lea r13, [rsp + 8]                              ; r13 = argv (pointer to the array of command-line arguments)
 
-    mov rdi, [rsp+16]       ; load the pointer to the first argument (argv[1]) into rdi
-    mov rsi, 10             ; set the base to 10 for decimal parsing
-    call parse_uint         ; parse the first argument (argv[1]) as a decimal number, result in rax
-    test rdx, rdx           ; check the status returned by parse_uint (rdx = 0 means success, rdx = 1 means invalid input)
-    jnz .parse_error        ; if rdx is not zero, jump to parse_error
+    ; Check if the user provided any arguments at all
+    cmp r12, 1                                      ; Compare argc with 1 (the program name itself)
+    jle print_usage                                 ; If argc <= 1, jump to print_usage
 
-    ; Exit with decimal for testing
-    mov rdi, rax            ; move the parsed decimal value into rdi for exit code
-    EXIT rdi                ; exit the program with the parsed decimal value as the exit code
+    ; Skip argv[0] (the program name) and start processing the remaining arguments
+    dec r12                                         ; Decrement argc to account for the program name
+    add r13, 8                                      ; Move the pointer to the next argument (argv[1])
 
-.usage:
-    PRINT msg                   ; print the usage message
-    EXIT EXIT_FAILURE           ; exit the program with failure code
+    .command_line_parse_loop:
+        cmp r12, 0                                  ; Check if there are any more arguments to process
+        je .command_line_parse_done                 ; If no more arguments, exit the loop
 
-.parse_error:
-    PRINT parse_err_msg         ; print the parse error message
-    EXIT EXIT_FAILURE           ; exit the program with failure code
+        mov r14, [r13]                              ; Load the current argument into r14
+
+        ; Check for the "--help" flag
+        mov rdi, r14
+        lea rsi, [flag_help]
+        call strcmp
+        cmp rax, 0
+        je print_usage                              ; If the argument is "--help", jump to print_usage
+
+        ; Check for the "--from" flag
+        mov rdi, r14
+        lea rsi, [flag_from]
+        call strcmp
+        cmp rax, 0
+        je .handle_from_flag                        ; If the argument is "--from", handle it
+
+        ; Check for the "--to" flag
+        mov rdi, r14
+        lea rsi, [flag_to]
+        call strcmp
+        cmp rax, 0
+        je .handle_to_flag                          ; If the argument is "--to", handle it
+
+        ; If the argument is not a recognized flag, treat it as the value to convert
+        mov [arg_value], r14                        ; Store the value in arg_value
+        jmp .command_line_parse_next_arg
+
+        .handle_from_flag:
+            ; Move to the next argument to get the --from base value
+            dec r12                                 ; decrement from remaining argument count
+            add r13, 8                              ; move to the next argument
+            cmp r12, 0                              ; Check if there is a next argument
+            je .missing_value_error
+
+            mov rdi, [r13]                          ; Load the next argument (the base value) into rdi
+            mov rsi, 10                             ; Set the base for conversion to 10 (decimal)
+            call parse_uint
+            mov [arg_from_base], rax                ; Store the parsed base value in arg_from_base
+            jmp .command_line_parse_next_arg
+
+        .handle_to_flag:
+            ; Move to the next argument to get the --to base value
+            dec r12                                 ; decrement from remaining argument count
+            add r13, 8                              ; move to the next argument
+            cmp r12, 0                              ; Check if there is a next argument
+            je .missing_value_error
+
+            mov rdi, [r13]                          ; Load the next argument (the base value) into rdi
+            mov rsi, 10                             ; Set the base for conversion to 10 (decimal)
+            call parse_uint
+            mov [arg_to_base], rax                  ; Store the parsed base value in arg_to_base
+            jmp .command_line_parse_next_arg
+
+        .missing_value_error:
+            PRINT parse_err_msg
+            EXIT EXIT_FAILURE
+
+        .command_line_parse_next_arg:
+            dec r12                                 ; Decrement the argument count
+            add r13, 8                              ; Move to the next argument
+            jmp .command_line_parse_loop            ; Repeat the loop
+
+        .command_line_parse_done:
+            ; After parsing all command-line arguments, check if the value to convert was provided
+            mov rdi, [rel arg_value]
+            cmp rdi, 0
+            je print_usage                          ; If no value was provided, print usage and exit
+
+            ; If the value is provided, proceed to execute the logic
+            jmp .execute_logic
+
+        .execute_logic:
+
+            mov rdi, [arg_from_base]
+            call print_int
+
+            WRITE STDOUT, newline, 1
+
+            mov rdi, [arg_to_base]
+            call print_int
+
+            WRITE STDOUT, newline, 1
+
+            mov rdi, [rel arg_value]
+            call print_str
+
+            WRITE STDOUT, newline, 1
+
+            EXIT EXIT_SUCCESS
+
+print_usage:
+    PRINT msg
+    EXIT EXIT_SUCCESS
