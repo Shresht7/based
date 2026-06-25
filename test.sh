@@ -107,3 +107,30 @@ else
     echo "Integration test failed: ./based A --from 16 does not convert to 1010 ❌"
     exit 1
 fi
+
+#./based 0xAF --to 10     should detect base from prefix
+OUTPUT=$(./based 0xAF --to 10)
+if echo "$OUTPUT" | grep -q "175"; then
+    echo "Integration test passed: ./based 0xAF --to 10 converts to 175 ☑️"
+else
+    echo "Integration test failed: ./based 0xAF --to 10 does not convert to 175 ❌"
+    exit 1
+fi
+
+# ./based 0b11011 --to 10     should detect base from prefix
+OUTPUT=$(./based 0b11011 --to 10)
+if echo "$OUTPUT" | grep -q "27"; then
+    echo "Integration test passed: ./based 0b11011 --to 10 converts to 27 ☑️"
+else
+    echo "Integration test failed: ./based 0b11011 --to 10 does not convert to 27 ❌"
+    exit 1
+fi
+
+# ./based 10 --from-base 2 --to-base 10     should support --from-base and --to-base as aliases for --from and --to
+OUTPUT=$(./based 10 --from-base 2 --to-base 10)
+if echo "$OUTPUT" | grep -q "2"; then
+    echo "Integration test passed: ./based 10 --from-base 2 --to-base 10 converts to 2 ☑️"
+else
+    echo "Integration test failed: ./based 10 --from-base 2 --to-base 10 does not convert to 2 ❌"
+    exit 1
+fi

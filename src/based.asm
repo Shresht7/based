@@ -10,9 +10,11 @@ section .data
     parse_err_msg db "error: invalid input", 10     ; error message for invalid input, followed by a newline character
     parse_err_msg_len equ $ - parse_err_msg         ; calculate the length of the error message
 
-    flag_from   db "--from", 0
-    flag_to     db "--to", 0
-    flag_help   db "--help", 0
+    flag_from           db "--from", 0
+    flag_from_base      db "--from-base", 0
+    flag_to             db "--to", 0
+    flag_to_base        db "--to-base", 0
+    flag_help           db "--help", 0
 
     arg_from_base   dq 10
     arg_to_base     dq 2
@@ -61,12 +63,26 @@ _start:
         cmp rax, 0
         je .handle_from_flag                        ; If the argument is "--from", handle it
 
+        ; Check for the "--from-base" flag
+        mov rdi, r14
+        lea rsi, [rel flag_from_base]
+        call strcmp
+        cmp rax, 0
+        je .handle_from_flag                        ; If the argument is "--from-base", handle it
+
         ; Check for the "--to" flag
         mov rdi, r14
         lea rsi, [rel flag_to]
         call strcmp
         cmp rax, 0
         je .handle_to_flag                          ; If the argument is "--to", handle it
+
+        ; Check for the "--to-base" flag
+        mov rdi, r14
+        lea rsi, [rel flag_to_base]
+        call strcmp
+        cmp rax, 0
+        je .handle_to_flag                          ; If the argument is "--to-base", handle it
 
         ; If the argument is not a recognized flag, treat it as the value to convert
         mov [rel arg_value], r14                    ; Store the value in arg_value
