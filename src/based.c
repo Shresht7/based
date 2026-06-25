@@ -70,13 +70,14 @@ void convert(const char *input, uint64_t from_base, uint64_t to_base)
     char *formatted_number = format_uint(parsed_number, output_buffer, to_base);
 
     // Print the formatted number to stdout
-    printf("%s\n", formatted_number);
+    printf("%s", formatted_number);
 }
 
 /// @brief Converts a single number from one base to another and prints the result to stdout.
 /// @param from_base The base of the input number.
 /// @param to_base The base to convert the number to.
-void convert_stdin(uint64_t from_base, uint64_t to_base)
+/// @param delimiter The delimiter to use between converted numbers.
+void convert_stdin(uint64_t from_base, uint64_t to_base, const char *delimiter)
 {
     size_t capacity = 1 << 16; // 64KB buffer
     size_t length = 0;
@@ -114,6 +115,10 @@ void convert_stdin(uint64_t from_base, uint64_t to_base)
         {
             convert(token, from_base, to_base); // Convert and print each token (number) from the input buffer
             token = strtok(NULL, " \t\r\n");    // Continue ~~token-ing~~ tokenizing the input buffer for the next number
+            if (token)
+            {
+                printf("%s", delimiter); // Print the delimiter after each converted number
+            }
         }
 
         free(input_buffer); // Free the buffer after processing
@@ -134,8 +139,9 @@ int main(int argc, char *argv[])
     }
 
     // Default Arguments
-    uint64_t from_base = 10;
-    uint64_t to_base = 2;
+    uint64_t from_base = 10; // Decimal
+    uint64_t to_base = 2;    // Binary
+    char *delimiter = "\n";  // Default delimiter is a newline character
     char *target_number = NULL;
 
     // Define Command Line Options
@@ -144,13 +150,14 @@ int main(int argc, char *argv[])
         {"from-base", required_argument, 0, 'f'},
         {"to", required_argument, 0, 't'},
         {"to-base", required_argument, 0, 't'},
+        {"delimiter", required_argument, 0, 'd'},
         {"help", no_argument, 0, 'h'},
         {"version", no_argument, 0, 'v'},
         {0, 0, 0, 0}};
 
     // Parse Command Line Options
     int opt;
-    while ((opt = getopt_long(argc, argv, "f:t:hv", long_options, NULL)) != -1)
+    while ((opt = getopt_long(argc, argv, "f:t:d:hv", long_options, NULL)) != -1)
     {
         switch (opt)
         {
@@ -159,6 +166,9 @@ int main(int argc, char *argv[])
             break;
         case 't':
             to_base = atoi(optarg);
+            break;
+        case 'd':
+            delimiter = optarg;
             break;
         case 'h':
             print_help();
@@ -178,6 +188,10 @@ int main(int argc, char *argv[])
         for (int i = optind; i < argc; i++)
         {
             convert(argv[i], from_base, to_base);
+            if (i < argc - 1)
+            {
+                printf("%s", delimiter); // Print the delimiter after each converted number
+            }
         }
     }
     else
@@ -191,7 +205,7 @@ int main(int argc, char *argv[])
         }
 
         // Read from stdin and convert each number
-        convert_stdin(from_base, to_base);
+        convert_stdin(from_base, to_base, delimiter);
     }
 
     // Exit the program successfully
