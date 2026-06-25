@@ -119,22 +119,26 @@ _start:
 
     TESTCASE "format_uint should format uint correctly"
         mov rdi, 12345
-        mov rsi, 10
+        mov rsi, __test_str_buffer
+        mov rdx, 10
         call format_uint
         ASSERT_STR_EQ rax, test_parse_decimal_str, "should format 12345 as '12345' in base 10"
 
         mov rdi, 6719
-        mov rsi, 16
+        mov rsi, __test_str_buffer
+        mov rdx, 16
         call format_uint
         ASSERT_STR_EQ rax, test_parse_hex_str, "should format 6719 as '1A3F' in base 16"
 
         mov rdi, 493
-        mov rsi, 8
+        mov rsi, __test_str_buffer
+        mov rdx, 8
         call format_uint
         ASSERT_STR_EQ rax, test_parse_octal_str, "should format 493 as '755' in base 8"
 
         mov rdi, 13
-        mov rsi, 2
+        mov rsi, __test_str_buffer
+        mov rdx, 2
         call format_uint
         ASSERT_STR_EQ rax, test_parse_binary_str, "should format 13 as '1101' in base 2"
 
