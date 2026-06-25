@@ -115,13 +115,13 @@ _start:
         .execute_logic:
             ; Load the value to convert and the bases
             mov rdi, [rel arg_value]                ; Load the value to convert into rdi
-            mov rsi, [arg_from_base]                ; Load the source base into rsi
+            mov rsi, [rel arg_from_base]            ; Load the source base into rsi
             call parse_uint                         ; Parse the value from the source base
             cmp rdx, 0                              ; Check if parsing was successful
             jne .parse_error                        ; If there was an error, jump to parse_error
 
             mov rdi, rax                            ; Move the parsed value into rdi for formatting
-            mov rsi, [arg_to_base]                  ; Load the target base into rsi
+            mov rsi, [rel arg_to_base]              ; Load the target base into rsi
             call format_uint                        ; Format the value into the target base
 
             mov rdi, rax                            ; Move the pointer to the formatted string into rdi
