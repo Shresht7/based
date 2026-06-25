@@ -113,23 +113,26 @@ _start:
             jmp .execute_logic
 
         .execute_logic:
+            ; Load the value to convert and the bases
+            mov rdi, [rel arg_value]                ; Load the value to convert into rdi
+            mov rsi, [arg_from_base]                ; Load the source base into rsi
+            call parse_uint                         ; Parse the value from the source base
+            cmp rdx, 0                              ; Check if parsing was successful
+            jne .parse_error                        ; If there was an error, jump to parse_error
 
-            mov rdi, [arg_from_base]
-            call print_int
+            mov rdi, rax                            ; Move the parsed value into rdi for formatting
+            mov rsi, [arg_to_base]                  ; Load the target base into rsi
+            call format_uint                        ; Format the value into the target base
 
-            WRITE STDOUT, newline, 1
-
-            mov rdi, [arg_to_base]
-            call print_int
-
-            WRITE STDOUT, newline, 1
-
-            mov rdi, [rel arg_value]
-            call print_str
-
-            WRITE STDOUT, newline, 1
+            mov rdi, rax                            ; Move the pointer to the formatted string into rdi
+            call print_str                          ; Print the formatted string
+            WRITE STDOUT, newline, 1                ; Print a newline character
 
             EXIT EXIT_SUCCESS
+
+        .parse_error:
+            PRINT parse_err_msg                     ; Print the error message for invalid input
+            EXIT EXIT_FAILURE                       ; Exit with failure status
 
 print_usage:
     PRINT msg
