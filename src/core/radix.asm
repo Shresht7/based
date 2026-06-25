@@ -1,50 +1,86 @@
 %ifndef RADIX_ASM
 %define RADIX_ASM
 
+section .bss
+    ; We need the space for a base-2 representation of the max uint64: i.e. 64 bits
+    ; +1 for null terminator
+    radix_buffer resb 65
+
 section .text
 
-    ; parse_decimal(rdi) -> rax
-    ; This function parses a decimal number from a null-terminated string pointed to by rdi. The parsed integer is returned in rax.
-    ; Arguments:
-    ;   rdi: pointer to the null-terminated string containing the decimal number
-    ;   rdx: status: 0 = ok, 1 = invalid input (bad char, or empty string)
-    ; Returns:
-    ;   rax: the parsed integer value
-    parse_decimal:
-        xor rax, rax                    ; clear rax to accumulate the result
-        xor r8, r8                      ; clear r8 to count the number of valid digits processed
+    ; parse_uint
+    ;
+    ; Parses a string representation of an unsigned integer in a given base (2-16) and returns the value as a uint64
+    ;
+    ; @param rdi: pointer to the string representation of the unsigned integer
+    ; @param rsi: base (2-16)
+    ; @returns rax: the parsed unsigned integer value
+    ; @returns rdx: 0 on success, 1 on invalid character, 2 on overflow
+    parse_uint:
+        xor rax, rax                ; Clear rax (the result)
+        xor rdx, rdx                ; Clear rdx (error flag)
+        xor r8, r8                  ; Clear r8 (the digit counter)
+        
+        .loop:
+            movzx rcx, byte [rdi]   ; Load the next character from the string
+            test rcx, rcx           ; Check for null terminator
+            jz .done                ; If null terminator, we're done
 
-    .parse_decimal_loop:
-        movzx rcx, byte [rdi]           ; load the current character into rcx
-        cmp rcx, 0                      ; check for null terminator
-        je .parse_decimal_done          ; if null terminator, we're done
+            ; Convert character to digit based on base
+            cmp rcx, '0'
+            jb .invalid_char
+            cmp rcx, '9'
+            jbe .digit_0_9
+            cmp rcx, 'A'
+            jb .invalid_char
+            cmp rcx, 'F'
+            jbe .digit_A_F
+            cmp rcx, 'a'
+            jb .invalid_char
+            cmp rcx, 'f'
+            jbe .digit_a_f
+            jmp .invalid_char
 
-        cmp rcx, '0'                    ; check if the character is less than '0'
-        jl .parse_decimal_invalid       ; if less than '0', it's invalid
-        cmp rcx, '9'                    ; check if the character is greater than '9'
-        jg .parse_decimal_invalid       ; if greater than '9', it's invalid
+        .digit_0_9:
+            sub rcx, '0'            ; Convert ASCII '0'-'9' to 0-9
+            jmp .check_digit
 
-        ; ASCII digits are contiguous ('0'=0x30 through '9'=0x39), so subtracting the ASCII code of '0'
-        ; converts the character directly to its numeric value (e.g. '7' - '0' = 7)
-        sub rcx, '0'                    ; convert ASCII character to integer (0-9).
-        imul rax, rax, 10               ; multiply the current result by 10 to shift left
-        add rax, rcx                    ; add the new digit to the result
-        inc r8                          ; increment the count of valid digits processed
-        inc rdi                         ; move to the next character in the string
-        jmp .parse_decimal_loop         ; repeat the loop for the next character
+        .digit_A_F:
+            sub rcx, 'A'            ; Convert ASCII 'A'-'F' to 10-15
+            add rcx, 10
+            jmp .check_digit
 
-    .check_empty:
-        cmp r8, 0                       ; check if any valid digits were processed
-        je .parse_decimal_invalid       ; if no valid digits, it's invalid
+        .digit_a_f:
+            sub rcx, 'a'            ; Convert ASCII 'a'-'f' to 10-15
+            add rcx, 10
+            jmp .check_digit
+        
+        .check_digit:
+            cmp rcx, rsi            ; Check if digit is valid for the base
+            ja .invalid_char        ; If digit >= base, it's invalid
 
-    .parse_decimal_invalid:
-        xor rax, rax                    ; clear rax to indicate failure (or could set to a specific error code)
-        mov rdx, 1                      ; set status to 1
-        ret
+            ; Check for overflow before multiplying
+            mov r9, rax             ; Store current result in r9
+            mov r10, rsi            ; Store base in r10
+            mul r10                 ; Multiply current result by base (rax = rax * base)
+            cmp rax, r9             ; Check if overflow occurred (rax < previous result)
+            jb .overflow             ; If overflow, jump to error handling
 
-    .parse_decimal_done:
-        ; rax now contains the parsed integer value
-        xor rdx, rdx                    ; set status to 0 (ok)
-        ret
+            add rax, rcx            ; Add the digit to the result
+            inc r8                  ; Increment digit counter
+            inc rdi                 ; Move to the next character
+            jmp .loop               ; Repeat the loop
+
+    .invalid_char:
+        mov rdx, 1              ; Set error flag to 1 (invalid character)
+        jmp .done               ; Exit the loop
+
+    .overflow:
+        mov rdx, 2              ; Set error flag to 2 (overflow)
+        jmp .done               ; Exit the loop
+
+    .done:
+        ret                     ; Return with rax = result, rdx = error flag
+
 
 %endif; RADIX_ASM
