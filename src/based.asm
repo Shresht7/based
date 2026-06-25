@@ -45,21 +45,21 @@ _start:
 
         ; Check for the "--help" flag
         mov rdi, r14
-        lea rsi, [flag_help]
+        lea rsi, [rel flag_help]
         call strcmp
         cmp rax, 0
         je print_usage                              ; If the argument is "--help", jump to print_usage
 
         ; Check for the "--from" flag
         mov rdi, r14
-        lea rsi, [flag_from]
+        lea rsi, [rel flag_from]
         call strcmp
         cmp rax, 0
         je .handle_from_flag                        ; If the argument is "--from", handle it
 
         ; Check for the "--to" flag
         mov rdi, r14
-        lea rsi, [flag_to]
+        lea rsi, [rel flag_to]
         call strcmp
         cmp rax, 0
         je .handle_to_flag                          ; If the argument is "--to", handle it
