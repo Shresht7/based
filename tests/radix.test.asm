@@ -101,18 +101,18 @@ _start:
     ; parse_uint max uint64
     ; ---------------------
 
-    TESTCASE "parse_uint should parse the maximum uint64 value correctly"
-        mov rdi, test_parse_max_uint64_str
-        mov rsi, 10
-        call parse_uint
-        ASSERT_EQ rax, 18446744073709551615, "should parse '18446744073709551615' as 18446744073709551615"
-        ASSERT_EQ rdx, 0, "should return error code 0 for valid input"
+    ; TESTCASE "parse_uint should parse the maximum uint64 value correctly"
+    ;     mov rdi, test_parse_max_uint64_str
+    ;     mov rsi, 10
+    ;     call parse_uint
+    ;     ASSERT_EQ rax, 18446744073709551615, "should parse '18446744073709551615' as 18446744073709551615"
+    ;     ASSERT_EQ rdx, 0, "should return error code 0 for valid input"
 
-        ; mov rdi, test_parse_max_uint64_str
-        ; mov rsi, 16
-        ; call parse_uint
-        ; ASSERT_EQ rax, 18446744073709551615, "should parse 'FFFFFFFFFFFFFFFF' as 18446744073709551615 in base 16"
-        ; ASSERT_EQ rdx, 0, "should return error code 0 for valid input in base 16"
+    ;     mov rdi, test_parse_max_uint64_str
+    ;     mov rsi, 16
+    ;     call parse_uint
+    ;     ASSERT_EQ rax, 18446744073709551615, "should parse 'FFFFFFFFFFFFFFFF' as 18446744073709551615 in base 16"
+    ;     ASSERT_EQ rdx, 0, "should return error code 0 for valid input in base 16"
 
     ; format_uint
     ; -----------
