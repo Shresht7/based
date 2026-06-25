@@ -4,6 +4,7 @@
 #include "stdint.h"
 #include "string.h"
 #include "getopt.h"
+#include "unistd.h"
 
 // Didn't want to deal with Windows shenanigans
 // So this C program wraps the core radix conversion functions implemented in assembly
@@ -72,6 +73,53 @@ void convert(const char *input, uint64_t from_base, uint64_t to_base)
     printf("%s\n", formatted_number);
 }
 
+/// @brief Converts a single number from one base to another and prints the result to stdout.
+/// @param from_base The base of the input number.
+/// @param to_base The base to convert the number to.
+void convert_stdin(uint64_t from_base, uint64_t to_base)
+{
+    size_t capacity = 1 << 16; // 64KB buffer
+    size_t length = 0;
+    char *input_buffer = malloc(capacity);
+    if (!input_buffer)
+    {
+        fprintf(stderr, "Error: Memory allocation failed.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    size_t bytes_read;
+    while ((bytes_read = fread(input_buffer + length, 1, capacity - length, stdin)) > 0)
+    {
+        length += bytes_read; // Update the length of the data read
+
+        // Check if we need to resize the buffer, and if so, double its size
+        if (length >= capacity)
+        {
+            capacity *= 2; // Double the buffer size
+            char *new_buffer = realloc(input_buffer, capacity);
+            if (!new_buffer)
+            {
+                fprintf(stderr, "Error: Memory allocation failed.\n");
+                free(input_buffer);
+                exit(EXIT_FAILURE);
+            }
+            input_buffer = new_buffer;
+        }
+
+        input_buffer[length] = '\0'; // Null-terminate the string for safety
+
+        // Tokenize the input buffer by whitespace and convert each token (number) from the specified source base to the target base
+        char *token = strtok(input_buffer, " \t\r\n");
+        while (token)
+        {
+            convert(token, from_base, to_base); // Convert and print each token (number) from the input buffer
+            token = strtok(NULL, " \t\r\n");    // Continue ~~token-ing~~ tokenizing the input buffer for the next number
+        }
+
+        free(input_buffer); // Free the buffer after processing
+    }
+}
+
 // MAIN
 // ----
 
@@ -129,15 +177,21 @@ int main(int argc, char *argv[])
         // Convert each remaining argument (number) from the specified source base to the target base
         for (int i = optind; i < argc; i++)
         {
-            convert_one(argv[i], from_base, to_base);
+            convert(argv[i], from_base, to_base);
         }
     }
     else
     {
-        // No number provided for conversion. Show an error message and the help message.
-        fprintf(stderr, "Error: No number provided for conversion.\n");
-        print_help();
-        return EXIT_FAILURE;
+        if (isatty(STDIN_FILENO))
+        {
+            // No positional arguments and nothing piped into stdin, print help and exit
+            fprintf(stderr, "Error: No number provided for conversion.\n");
+            print_help();
+            return EXIT_FAILURE;
+        }
+
+        // Read from stdin and convert each number
+        convert_stdin(from_base, to_base);
     }
 
     // Exit the program successfully
