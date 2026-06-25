@@ -6,7 +6,7 @@
 section .data
 
     DEFINE_STR NAME,    "based"     , 0
-    DEFINE_STR VERSION, "v0.1.0"    , 0
+    DEFINE_STR VERSION, "v0.2.0"    , 0
 
     ; Help / Usage Message
     ; --------------------
