@@ -65,7 +65,7 @@ _start:
         je .handle_to_flag                          ; If the argument is "--to", handle it
 
         ; If the argument is not a recognized flag, treat it as the value to convert
-        mov [arg_value], r14                        ; Store the value in arg_value
+        mov [rel arg_value], r14                    ; Store the value in arg_value
         jmp .command_line_parse_next_arg
 
         .handle_from_flag:
@@ -78,7 +78,7 @@ _start:
             mov rdi, [r13]                          ; Load the next argument (the base value) into rdi
             mov rsi, 10                             ; Set the base for conversion to 10 (decimal)
             call parse_uint
-            mov [arg_from_base], rax                ; Store the parsed base value in arg_from_base
+            mov [rel arg_from_base], rax            ; Store the parsed base value in arg_from_base
             jmp .command_line_parse_next_arg
 
         .handle_to_flag:
@@ -91,7 +91,7 @@ _start:
             mov rdi, [r13]                          ; Load the next argument (the base value) into rdi
             mov rsi, 10                             ; Set the base for conversion to 10 (decimal)
             call parse_uint
-            mov [arg_to_base], rax                  ; Store the parsed base value in arg_to_base
+            mov [rel arg_to_base], rax              ; Store the parsed base value in arg_to_base
             jmp .command_line_parse_next_arg
 
         .missing_value_error:
