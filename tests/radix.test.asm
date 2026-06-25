@@ -114,5 +114,29 @@ _start:
         ; ASSERT_EQ rax, 18446744073709551615, "should parse 'FFFFFFFFFFFFFFFF' as 18446744073709551615 in base 16"
         ; ASSERT_EQ rdx, 0, "should return error code 0 for valid input in base 16"
 
+    ; format_uint
+    ; -----------
+
+    TESTCASE "format_uint should format uint correctly"
+        mov rdi, 12345
+        mov rsi, 10
+        call format_uint
+        ASSERT_STR_EQ rax, test_parse_decimal_str, "should format 12345 as '12345' in base 10"
+
+        mov rdi, 6719
+        mov rsi, 16
+        call format_uint
+        ASSERT_STR_EQ rax, test_parse_hex_str, "should format 6719 as '1A3F' in base 16"
+
+        mov rdi, 493
+        mov rsi, 8
+        call format_uint
+        ASSERT_STR_EQ rax, test_parse_octal_str, "should format 493 as '755' in base 8"
+
+        mov rdi, 13
+        mov rsi, 2
+        call format_uint
+        ASSERT_STR_EQ rax, test_parse_binary_str, "should format 13 as '1101' in base 2"
+
     ; All tests passed, exit with status 0
     EXIT EXIT_SUCCESS

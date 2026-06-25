@@ -84,5 +84,48 @@ section .text
     .done:
         ret                     ; Return with rax = result, rdx = error flag
 
+    
+    ; format_uint
+    ;
+    ; Formats a uint64 value into a string representation in a given base (2-16)
+    ;
+    ; @param rdi: the uint64 value to format
+    ; @param rsi: base (2-16)
+    ; @returns rax: pointer to the formatted string (null-terminated)
+    format_uint:
+        mov rax, rdi                    ; Move the number to be formatted into rax
+        mov r9, rsi                     ; Move the base into r9
+        lea r10, [radix_buffer + 64]    ; Point r10 to the end of the buffer
+        mov byte [r10], 0               ; Null-terminate the string
+
+        test rax, rax
+        jnz .format_loop                ; If rax is not zero, continue formatting
+        dec r10                         ; If rax is zero, just return "0"
+        mov byte [r10], '0'
+        jmp .done_formatting
+
+        .format_loop:
+            test rax, rax
+            jz .done_formatting          ; If rax is zero, we're done formatting
+            xor rdx, rdx                 ; Clear rdx for division
+            div r9                        ; Divide rax by base (r9), quotient in rax, remainder in rdx
+
+            cmp rdx, 10
+            jl .digit_0_9                ; If remainder < 10, it's a digit
+            add rdx, 'A' - 10            ; Convert to ASCII 'A'-'F'
+            jmp .store_digit
+
+        .digit_0_9:
+            add rdx, '0'                 ; Convert to ASCII '0'-'9'
+
+        .store_digit:
+            dec r10                       ; Move buffer pointer back
+            mov [r10], dl                 ; Store the character in the buffer
+            jmp .format_loop              ; Repeat the loop
+
+        .done_formatting:
+            mov rax, r10                    ; Return pointer to the start of the formatted string
+            ret
+
 
 %endif; RADIX_ASM
