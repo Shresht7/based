@@ -124,14 +124,17 @@ int main(int argc, char *argv[])
         }
     }
 
-    // Ensure that the user provided a number to convert
     if (optind < argc)
     {
-        target_number = argv[optind];
-        convert(target_number, from_base, to_base);
+        // Convert each remaining argument (number) from the specified source base to the target base
+        for (int i = optind; i < argc; i++)
+        {
+            convert_one(argv[i], from_base, to_base);
+        }
     }
     else
     {
+        // No number provided for conversion. Show an error message and the help message.
         fprintf(stderr, "Error: No number provided for conversion.\n");
         print_help();
         return EXIT_FAILURE;
