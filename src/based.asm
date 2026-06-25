@@ -4,18 +4,22 @@
 %include "src/core/radix.asm"
 
 section .data
+    DEFINE_STR VERSION, "v0.1.0", 0                 ; Define a null-terminated string for the version number
+
     msg db "usage: based <value>", 10               ; message to print, followed by a newline character
     msg_len equ $ - msg                             ; calculate the length of the message. `$` means current address, so `$ - msg` gives the length of the message in bytes
 
     parse_err_msg db "error: invalid input", 10     ; error message for invalid input, followed by a newline character
     parse_err_msg_len equ $ - parse_err_msg         ; calculate the length of the error message
 
-    flag_from           db "--from", 0
-    flag_from_base      db "--from-base", 0
-    flag_to             db "--to", 0
-    flag_to_base        db "--to-base", 0
-    flag_help           db "--help", 0
-    flag_help_short     db "-h", 0
+    flag_from               db "--from", 0
+    flag_from_base          db "--from-base", 0
+    flag_to                 db "--to", 0
+    flag_to_base            db "--to-base", 0
+    flag_help               db "--help", 0
+    flag_help_short         db "-h", 0
+    flag_version            db "--version", 0
+    flag_version_short      db "-v", 0
 
     arg_from_base   dq 10
     arg_to_base     dq 2
@@ -25,8 +29,7 @@ section .data
 section .bss
     arg_value       resq 1
 
-    ; We need the space for a base-2 representation of the max uint64: i.e. 64 bits
-    ; +1 for null terminator
+    ; We need the space for a base-2 representation of the max uint64: i.e. 64 bits. +1 for null terminator
     radix_buffer resb 65
 
 section .text
@@ -63,6 +66,20 @@ _start:
         call strcmp
         cmp rax, 0
         je print_usage                              ; If the argument is "-h", jump to print_usage
+
+        ; Check for the "--version" flag
+        mov rdi, r14
+        lea rsi, [rel flag_version]
+        call strcmp
+        cmp rax, 0
+        je print_version                           ; If the argument is "--version", jump to print_version
+
+        ; Check for the "-v" flag
+        mov rdi, r14
+        lea rsi, [rel flag_version_short]
+        call strcmp
+        cmp rax, 0
+        je print_version                           ; If the argument is "-v", jump to print_version
 
         ; Check for the "--from" flag
         mov rdi, r14
@@ -165,4 +182,9 @@ _start:
 
 print_usage:
     PRINT msg
+    EXIT EXIT_SUCCESS
+
+print_version:
+    PRINT VERSION
+    WRITE STDOUT, newline, 1
     EXIT EXIT_SUCCESS
