@@ -55,7 +55,7 @@ void print_version()
 int main(int argc, char *argv[])
 {
     // Check if the user provided any argumets at all
-    if (argc <= 2)
+    if (argc < 2)
     {
         print_help();
         return EXIT_SUCCESS;
