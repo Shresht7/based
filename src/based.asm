@@ -47,22 +47,33 @@ section .data
     DEFINE_STR err_overflow,      "error: uint64 overflow. number too large!", 0xA
     DEFINE_STR err_generic,       "error: something bad happened!", 0xA
 
-    arg_from_base   dq 10
-    arg_to_base     dq 2
+    ; ARGUMENTS
+    ; ---------
+
+    arg_from_base   dq 10       ; Default source base is 10 (decimal)
+    arg_to_base     dq 2        ; Default target base is 2 (binary)
 
     ; Newline character for printing
     DEFINE_STR NEWLINE, 0xA
 
 section .bss
+    ; Reserve space for the value to convert (8 bytes for a 64-bit integer)
     arg_value       resq 1
-
     ; We need the space for a base-2 representation of the max uint64: i.e. 64 bits. +1 for null terminator
     radix_buffer resb 65
+
+; ----
+; CODE
+; ----
 
 section .text
 ; The main entry-point of the program
 global _start
 _start:
+
+    ; COMMAND LINE PARSING LOGIC
+    ; --------------------------
+
     mov r12, [rsp]                                  ; r12 = argc (number of command-line arguments)
     lea r13, [rsp + 8]                              ; r13 = argv (pointer to the array of command-line arguments)
 
@@ -203,24 +214,31 @@ _start:
             ; If the value is provided, proceed to execute the logic
             jmp .execute_logic
 
-        .execute_logic:
-            ; Load the value to convert and the bases
-            mov rdi, [rel arg_value]                ; Load the value to convert into rdi
-            mov rsi, [rel arg_from_base]            ; Load the source base into rsi
-            call parse_uint                         ; Parse the value from the source base
-            cmp rdx, 0                              ; Check if parsing was successful
-            jne .parse_error                        ; If there was an error, jump to parse_error
 
-            mov rdi, rax                            ; Move the parsed value into rdi for formatting
-            lea rsi, [rel radix_buffer]             ; Load the address of the buffer to store the formatted string
-            mov rdx, [rel arg_to_base]              ; Load the target base into rdx
-            call format_uint                        ; Format the value into the target base
+    ; EXECUTION LOGIC
+    ; ---------------
 
-            mov rdi, rax                            ; Move the pointer to the formatted string into rdi
-            call print_str                          ; Print the formatted string
-            PRINT NEWLINE                           ; Print a newline after the output
+    .execute_logic:
+        mov rdi, [rel arg_value]                ; Load the value to convert into rdi
+        mov rsi, [rel arg_from_base]            ; Load the source base into rsi
+        call parse_uint                         ; Parse the value from the source base
+        cmp rdx, 0                              ; Check if parsing was successful
+        jne .parse_error                        ; If there was an error, jump to parse_error
 
-            EXIT EXIT_SUCCESS
+        mov rdi, rax                            ; Move the parsed value into rdi for formatting
+        lea rsi, [rel radix_buffer]             ; Load the address of the buffer to store the formatted string
+        mov rdx, [rel arg_to_base]              ; Load the target base into rdx
+        call format_uint                        ; Format the value into the target base
+
+        mov rdi, rax                            ; Move the pointer to the formatted string into rdi
+        call print_str                          ; Print the formatted output string
+        PRINT NEWLINE                           ; Print a newline after the output
+
+        EXIT EXIT_SUCCESS                       ; Exit the program successfully!
+
+; -----------
+; SUBROUTINES
+; -----------
 
 print_usage:
     PRINT HELP
