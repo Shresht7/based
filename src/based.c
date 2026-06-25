@@ -126,6 +126,43 @@ void convert_stdin(uint64_t from_base, uint64_t to_base, const char *delimiter)
     }
 }
 
+/// @brief Converts a base name string to its corresponding integer base value.
+/// @param base_str The base name string (e.g., "bin", "oct", "dec", "hex") or an integer string representing the base.
+/// @return The corresponding integer base value (2, 8, 10, 16) or the integer value of the base if it's between 2 and 36. Exits with an error if the base is invalid.
+int base_from_string(const char *base_str)
+{
+    if (strcmp(base_str, "bin") == 0 || strcmp(base_str, "binary") == 0 || strcmp(base_str, "b") == 0)
+    {
+        return 2;
+    }
+    else if (strcmp(base_str, "oct") == 0 || strcmp(base_str, "octal") == 0 || strcmp(base_str, "o") == 0)
+    {
+        return 8;
+    }
+    else if (strcmp(base_str, "dec") == 0 || strcmp(base_str, "decimal") == 0 || strcmp(base_str, "d") == 0)
+    {
+        return 10;
+    }
+    else if (strcmp(base_str, "hex") == 0 || strcmp(base_str, "hexadecimal") == 0 || strcmp(base_str, "h") == 0)
+    {
+        return 16;
+    }
+    else
+    {
+        // If the string is not a recognized base name, try to convert it to an integer
+        int base = atoi(base_str);
+        if (base >= 2 && base <= 36)
+        {
+            return base; // Return the integer base if it's valid
+        }
+        else
+        {
+            fprintf(stderr, "Error: Invalid base '%s'. Supported bases are: bin, oct, dec, hex or any integer between 2 and 36.\n", base_str);
+            exit(EXIT_FAILURE); // Exit with an error code for invalid base
+        }
+    }
+}
+
 // MAIN
 // ----
 
@@ -163,10 +200,10 @@ int main(int argc, char *argv[])
         switch (opt)
         {
         case 'f':
-            from_base = atoi(optarg);
+            from_base = base_from_string(optarg);
             break;
         case 't':
-            to_base = atoi(optarg);
+            to_base = base_from_string(optarg);
             break;
         case 'd':
             delimiter = optarg;
