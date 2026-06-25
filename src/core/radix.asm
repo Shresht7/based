@@ -2,6 +2,44 @@
 %define RADIX_ASM
 
 section .text
+    
+    ; detect_base
+    ; 
+    ; Peeks at the string representation at rdi and updates the base (rsi) if necessary
+    ; 
+    ; @param rdi: pointer to the string representation of the unsigned integer
+    ; @returns rdi: pointer to the string representation advanced by 2 characters
+    ; @returns rsi: Updates the rsi to the correct base
+    detect_base:
+        mov cx, word [rdi]          ; Peek at the first two characters
+
+        cmp cx, '0x'                ; If the prefix is '0x'
+        je .is_hexadecimal          ; the string is in hexadecimal representation
+        cmp cx, '0o'                ; If the prefix is '0o'
+        je .is_octal                ; the string is in octal representation
+        cmp cx, '0b'                ; If the prefix is '0b'
+        je .is_binary               ; the string is in binary representation
+        ; If none of the above match, we assume no prefix / decimal number
+        jmp .is_decimal
+
+        .is_hexadecimal:
+            mov rsi, 16             ; Override base to be 16
+            add rdi, 2              ; Advance the pointer forward skipping the '0x' prefix
+            ret
+
+        .is_octal:
+            mov rsi, 8              ; Override base to 8
+            add rdi, 2              ; Advance the pointer forward skipping the '0o' prefix
+            ret
+
+        .is_binary:
+            mov rsi, 2              ; Override base to 2
+            add rdi, 2              ; Advance the pointer forward skipping the '0b' prefix
+            ret
+
+        .is_decimal:
+            mov rsi, 10             ; Override the base to 10
+            ret
 
     ; parse_uint
     ;
@@ -12,7 +50,7 @@ section .text
     ; @returns rax: the parsed unsigned integer value
     ; @returns rdx: 0 on success, 1 on invalid character, 2 on overflow
     parse_uint:
-        xor rax, rax                ; Clear rax (the result)
+        xor rax, rax                ; Clear rax (the result aggregator)
         xor rdx, rdx                ; Clear rdx (error flag)
         xor r8, r8                  ; Clear r8 (the digit counter)
         

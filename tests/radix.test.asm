@@ -19,6 +19,15 @@ section .data
     DEFINE_STR test_parse_overflow_str, "18446744073709551616", 0       ; Define a null-terminated test string for parse_uint that causes overflow (2^64)
     DEFINE_STR test_parse_max_uint64_str, "18446744073709551615", 0     ; Define a null-terminated test string for parse_uint that is the maximum uint64 value (2^64 - 1)
 
+    DEFINE_STR test_detect_base_decimal, "75", 0            ; Define a normal decimal string for detect_base
+    DEFINE_STR test_detect_base_hexadecimal, "0xAF", 0      ; Define a hexadecimal string for detect_base
+    DEFINE_STR test_detect_base_octal, "0o755", 0           ; Define a octal string for detect_base
+    DEFINE_STR test_detect_base_binary, "0b11011", 0        ; Define a binary string for detect_base
+    DEFINE_STR test_detect_base_decimal_unprefixed, "75", 0
+    DEFINE_STR test_detect_base_hexadecimal_unprefixed, "AF", 0
+    DEFINE_STR test_detect_base_octal_unprefixed, "755", 0
+    DEFINE_STR test_detect_base_binary_unprefixed, "11011", 0
+
 section .bss
         __test_number_buffer resb 96    ; Reserve 96 bytes for the test number buffer
         __test_str_buffer resb 96       ; Reserve 96 bytes for the test string buffer
@@ -141,6 +150,30 @@ _start:
         mov rdx, 2
         call format_uint
         ASSERT_STR_EQ rax, test_parse_binary_str, "should format 13 as '1101' in base 2"
+
+    ; detect_base
+    ; -----------
+
+    TESTCASE "detect_base should be able to detect the base!"
+        mov rdi, test_detect_base_decimal
+        call detect_base
+        ASSERT_EQ rsi, 10, "should detect normal decimal strings"
+        ASSERT_STR_EQ rdi, test_detect_base_decimal_unprefixed, "should not advance the string pointer as there is no prefix"
+
+        mov rdi, test_detect_base_hexadecimal
+        call detect_base
+        ASSERT_EQ rsi, 16, "should detect hexadecimal string prefixed with '0x'"
+        ASSERT_STR_EQ rdi, test_detect_base_hexadecimal_unprefixed, "should advance the pointer foward to skip the '0x'"
+
+        mov rdi, test_detect_base_octal
+        call detect_base
+        ASSERT_EQ rsi, 8, "should detect octal string prefixed with '0o'"
+        ASSERT_STR_EQ rdi, test_detect_base_octal_unprefixed, "should advance the pointer foward to skip the '0o'"
+
+        mov rdi, test_detect_base_binary
+        call detect_base
+        ASSERT_EQ rsi, 2, "should detect binary string prefixed with '0b'"
+        ASSERT_STR_EQ rdi, test_detect_base_binary_unprefixed, "should advance the pointer foward to skip the '0b'"
 
     ; All tests passed, exit with status 0
     EXIT EXIT_SUCCESS
