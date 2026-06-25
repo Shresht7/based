@@ -11,7 +11,7 @@ section .data
     ; Help / Usage Message
     ; --------------------
 
-    HELP db "Usage: based [options] <value>"                                                                 , 0xA
+    HELP db "Usage: based [options] <value>"                                                                , 0xA
             db ""                                                                                           , 0xA
             db "Options:"                                                                                   , 0xA
             db "  -f, --from, --from-base <base>   Source base (default: 10)"                               , 0xA
@@ -50,7 +50,8 @@ section .data
     arg_from_base   dq 10
     arg_to_base     dq 2
 
-    newline db 10                                   ; newline character
+    ; Newline character for printing
+    DEFINE_STR NEWLINE, 0xA
 
 section .bss
     arg_value       resq 1
@@ -217,7 +218,7 @@ _start:
 
             mov rdi, rax                            ; Move the pointer to the formatted string into rdi
             call print_str                          ; Print the formatted string
-            WRITE STDOUT, newline, 1                ; Print a newline character
+            PRINT NEWLINE                           ; Print a newline after the output
 
             EXIT EXIT_SUCCESS
 
@@ -227,5 +228,5 @@ print_usage:
 
 print_version:
     PRINT VERSION
-    WRITE STDOUT, newline, 1
+    PRINT NEWLINE
     EXIT EXIT_SUCCESS
