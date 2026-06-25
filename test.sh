@@ -7,6 +7,7 @@ SRC="src"
 TESTS="tests"
 BUILD="build"
 NAME="based"
+WRAPPER_NAME="based_c"
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -55,20 +56,27 @@ nasm -f elf64 src/based.asm -o "$BUILD/$NAME.o"
 ld "$BUILD/$NAME.o" -o "./$NAME"
 chmod +x "./$NAME"
 
+# BUILD C WRAPPER EXECUTABLE
+# --------------------------
+
+nasm -f elf64 src/core/radix.asm -o "$BUILD/radix.o"
+gcc "$SRC/$NAME.c" "$BUILD/radix.o" -o "./$WRAPPER_NAME"
+
 # INTEGRATION TESTS
 # -----------------
 
 echo -e "\n${YELLOW}=== Running Integration Tests ===${RESET}\n"
 
-# Usage: assert_exact <arguments> <expected_output> <test_description>
+# Usage: assert_exact <command> <arguments> <expected_output> <test_description>
 assert_exact() {
     TOTAL=$((TOTAL + 1))  # Increment total test count
-    local args="$1"
-    local expected="$2"
-    local description="$3"
+    local command="$1"
+    local args="$2"
+    local expected="$3"
+    local description="$4"
 
     # Run the command and capture output
-    local output=$(./$NAME $args)
+    local output=$(eval "$command $args")
     
     if [ "$output" = "$expected" ]; then
         echo -e "[ ${GREEN}PASS${RESET} ]: $description"
@@ -80,15 +88,16 @@ assert_exact() {
     fi
 }
 
-# Usage: assert_contains <arguments> <expected_substring> <test_description>
+# Usage: assert_contains <command> <arguments> <expected_substring> <test_description>
 assert_contains() {    
     TOTAL=$((TOTAL + 1))  # Increment total test count
-    local args="$1"
-    local expected_substring="$2"
-    local description="$3"
+    local command="$1"
+    local args="$2"
+    local expected_substring="$3"
+    local description="$4"
 
     # Run the command and capture output
-    local output=$(./$NAME $args)
+    local output=$(eval "$command $args")
     
     if [[ "$output" == *"$expected_substring"* ]]; then
         echo -e "[ ${GREEN}PASS${RESET} ]: $description"
@@ -100,27 +109,58 @@ assert_contains() {
     fi
 }
 
+# PURE ASSEMBLY CLI INTEGRATION TESTS
+# -----------------------------------
+
+echo -e "\n${YELLOW}=== Pure Assembly CLI Integration Tests ===${RESET}\n"
+
 # Help and Usage
-assert_contains ""                          "Usage"     "should print usage when no arguments are provided"
-assert_contains "--help"                    "Usage"     "should print usage when --help is provided"
-assert_contains "-h"                        "Usage"     "should print usage when -h is provided"
+assert_contains "./$NAME" ""                           "Usage"  "asm cli should print usage when no arguments are provided"
+assert_contains "./$NAME" "--help"                     "Usage"  "asm cli should print usage when --help is provided"
+assert_contains "./$NAME" "-h"                         "Usage"  "asm cli should print usage when -h is provided"
 
 # Conversion Tests
-assert_exact "--from 10 --to 2 15"          "1111"      "should convert 15 from base 10 to base 2"
-assert_exact "--from 2 --to 10 1111"        "15"        "should convert 1111 from base 2 to base 10"
-assert_exact "--from 16 --to 10 F"          "15"        "should convert F from base 16 to base 10"
+assert_exact "./$NAME" "--from 10 --to 2 15"           "1111"   "asm cli should convert 15 from base 10 to base 2"
+assert_exact "./$NAME" "--from 2 --to 10 1111"         "15"     "asm cli should convert 1111 from base 2 to base 10"
+assert_exact "./$NAME" "--from 16 --to 10 F"           "15"     "asm cli should convert F from base 16 to base 10"
+assert_exact "./$NAME" "--from 8 --to 16 77"           "3F"     "asm cli should convert 77 from base 8 to base 16"
 
 # Argument Order and Defaults
-assert_exact "12 --from 10 --to 16"          "C"         "should accept arguments in any order"
-assert_exact "14 --to 2"                     "1110"      "should default to base 10 when --from is not provided"
-assert_exact "A --from 16"                   "1010"      "should default to base 2 when --to is not provided"
+assert_exact "./$NAME" "12 --from 10 --to 16"          "C"      "asm cli should accept arguments in any order"
+assert_exact "./$NAME" "14 --to 2"                     "1110"   "asm cli should default to base 10 when --from is not provided"
+assert_exact "./$NAME" "A --from 16"                   "1010"   "asm cli should default to base 2 when --to is not provided"
 
 # Prefix Detection
-assert_exact "0xAF --to 10"                  "175"       "should detect base from prefix 0x for hexadecimal"
-assert_exact "0b11011 --to 10"               "27"        "should detect base from prefix 0b for binary"
+assert_exact "./$NAME" "0xAF --to 10"                  "175"    "asm cli should detect base from prefix 0x for hexadecimal"
+assert_exact "./$NAME" "0b11011 --to 10"               "27"     "asm cli should detect base from prefix 0b for binary"
+assert_exact "./$NAME" "0o77 --to 16"                  "3F"     "asm cli should detect base from prefix 0o for octal"
 
 # Aliases for --from and --to
-assert_exact "10 --from-base 2 --to-base 10" "2"        "should support aliases for --from and --to"
+assert_exact "./$NAME" "10 --from-base 2 --to-base 10" "2"      "asm cli should support aliases for --from and --to"
+
+# C WRAPPER CLI INTEGRATION TESTS
+# -------------------------------
+
+echo -e "\n${YELLOW}=== C Wrapper CLI Integration Tests ===${RESET}\n"
+
+# Help and Usage
+assert_contains "./$WRAPPER_NAME" ""                                         "Usage"  "wrapper cli should print usage when no arguments are provided"
+assert_contains "./$WRAPPER_NAME" "--help"                                   "Usage"  "wrapper cli should print usage when --help is provided"
+
+# Numeric and named-base conversions
+assert_exact "./$WRAPPER_NAME" "--from 10 --to 16 175"                       "AF"     "wrapper cli should convert 175 from base 10 to base 16"
+assert_exact "./$WRAPPER_NAME" "--from decimal --to hex 175"                 "AF"     "wrapper cli should support long named base aliases"
+assert_exact "./$WRAPPER_NAME" "--from hex --to decimal FF"                  "255"    "wrapper cli should support short named base aliases"
+assert_exact "./$WRAPPER_NAME" "--from-base octal --to-base binary 77"       "111111" "wrapper cli should support named aliases with long option aliases"
+assert_exact "./$WRAPPER_NAME" "--from b --to h 11111111"                    "FF"     "wrapper cli should support one-letter base aliases"
+
+# Multiple values and delimiter handling
+assert_exact "./$WRAPPER_NAME" "--from 2 --to 10 1011 1111 --delimiter ', '" "11, 15" "wrapper cli should convert multiple values with a custom delimiter"
+
+# Prefix detection and stdin conversion
+assert_exact "./$WRAPPER_NAME" "0xAF --to 10"                                "175"    "wrapper cli should detect base from prefix 0x"
+assert_exact "./$WRAPPER_NAME" "0o77 --to decimal"                           "63"     "wrapper cli should detect base from prefix 0o with named target base"
+assert_exact "printf 'FF A\n' | ./$WRAPPER_NAME --from hex --to decimal --delimiter ':'" "" "255:10" "wrapper cli should read multiple values from stdin with a custom delimiter"
 
 # SUMMARY REPORT
 # --------------
