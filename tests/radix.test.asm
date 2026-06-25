@@ -16,7 +16,8 @@ section .data
     DEFINE_STR test_parse_binary_str, "1101", 0             ; Define a null-terminated test string for parse_binary
     DEFINE_STR test_parse_invalid_binary_str, "1102", 0     ; Define a null-terminated test string for parse_binary with an invalid character
 
-    DEFINE_STR test_parse_overflow_str, "18446744073709551616", 0   ; Define a null-terminated test string for parse_uint that causes overflow (2^64)
+    DEFINE_STR test_parse_overflow_str, "18446744073709551616", 0       ; Define a null-terminated test string for parse_uint that causes overflow (2^64)
+    DEFINE_STR test_parse_max_uint64_str, "18446744073709551615", 0     ; Define a null-terminated test string for parse_uint that is the maximum uint64 value (2^64 - 1)
 
 section .bss
         __test_number_buffer resb 96    ; Reserve 96 bytes for the test number buffer
@@ -96,6 +97,22 @@ _start:
         call parse_uint
         ASSERT_EQ rdx, 2, "should return error code 2 for overflow when parsing '18446744073709551616'"
         ASSERT_EQ rax, 0, "should return 0 in rax for overflow"
+
+    ; parse_uint max uint64
+    ; ---------------------
+
+    TESTCASE "parse_uint should parse the maximum uint64 value correctly"
+        mov rdi, test_parse_max_uint64_str
+        mov rsi, 10
+        call parse_uint
+        ASSERT_EQ rax, 18446744073709551615, "should parse '18446744073709551615' as 18446744073709551615"
+        ASSERT_EQ rdx, 0, "should return error code 0 for valid input"
+
+        ; mov rdi, test_parse_max_uint64_str
+        ; mov rsi, 16
+        ; call parse_uint
+        ; ASSERT_EQ rax, 18446744073709551615, "should parse 'FFFFFFFFFFFFFFFF' as 18446744073709551615 in base 16"
+        ; ASSERT_EQ rdx, 0, "should return error code 0 for valid input in base 16"
 
     ; All tests passed, exit with status 0
     EXIT EXIT_SUCCESS
