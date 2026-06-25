@@ -15,6 +15,7 @@ section .data
     flag_to             db "--to", 0
     flag_to_base        db "--to-base", 0
     flag_help           db "--help", 0
+    flag_help_short     db "-h", 0
 
     arg_from_base   dq 10
     arg_to_base     dq 2
@@ -55,6 +56,13 @@ _start:
         call strcmp
         cmp rax, 0
         je print_usage                              ; If the argument is "--help", jump to print_usage
+
+        ; Check for the "-h" flag
+        mov rdi, r14
+        lea rsi, [rel flag_help_short]
+        call strcmp
+        cmp rax, 0
+        je print_usage                              ; If the argument is "-h", jump to print_usage
 
         ; Check for the "--from" flag
         mov rdi, r14
