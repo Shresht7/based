@@ -48,6 +48,30 @@ void print_version()
     printf("%s\n", VERSION);
 }
 
+// BASED
+// -----
+
+/// @brief Converts a number from one base to another and prints the result to stdout.
+/// @param input The input number as a string.
+/// @param from_base The base of the input number.
+/// @param to_base The base to convert the number to.
+void convert(const char *input, uint64_t from_base, uint64_t to_base)
+{
+    // Parse the input number from the specified base
+    uint64_t parsed_number = parse_uint(input, from_base);
+
+    // TODO: Handle parsing errors (e.g., invalid characters for the base, overflow, etc.)
+
+    // Create a 65-byte buffer to hold the binary representation of a 64-bit number (64 bits + null terminator) on the C stack
+    char output_buffer[65];
+
+    // Format the parsed number into the target base and store it in the output buffer
+    char *formatted_number = format_uint(parsed_number, output_buffer, to_base);
+
+    // Print the formatted number to stdout
+    printf("%s\n", formatted_number);
+}
+
 // MAIN
 // ----
 
@@ -101,30 +125,17 @@ int main(int argc, char *argv[])
     }
 
     // Ensure that the user provided a number to convert
-    if (optind >= argc)
+    if (optind < argc)
+    {
+        target_number = argv[optind];
+        convert(target_number, from_base, to_base);
+    }
+    else
     {
         fprintf(stderr, "Error: No number provided for conversion.\n");
         print_help();
         return EXIT_FAILURE;
     }
-    else
-    {
-        target_number = argv[optind];
-    }
-
-    // Parse the input number from the specified base
-    uint64_t parsed_number = parse_uint(target_number, from_base);
-
-    // TODO: Handle parsing errors (e.g., invalid characters for the base, overflow, etc.)
-
-    // Create a 65-byte buffer to hold the binary representation of a 64-bit number (64 bits + null terminator) on the C stack
-    char output_buffer[65];
-
-    // Format the parsed number into the target base and store it in the output buffer
-    char *formatted_number = format_uint(parsed_number, output_buffer, to_base);
-
-    // Print the formatted number to stdout
-    printf("%s\n", formatted_number);
 
     // Exit the program successfully
     return EXIT_SUCCESS;
