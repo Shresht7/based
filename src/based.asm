@@ -9,17 +9,28 @@ section .data
     msg db "usage: based <value>", 10               ; message to print, followed by a newline character
     msg_len equ $ - msg                             ; calculate the length of the message. `$` means current address, so `$ - msg` gives the length of the message in bytes
 
-    parse_err_msg db "error: invalid input", 10     ; error message for invalid input, followed by a newline character
-    parse_err_msg_len equ $ - parse_err_msg         ; calculate the length of the error message
+    ; Flags / Options
+    ; ---------------
 
     flag_from               db "--from", 0
     flag_from_base          db "--from-base", 0
+
     flag_to                 db "--to", 0
     flag_to_base            db "--to-base", 0
+
     flag_help               db "--help", 0
     flag_help_short         db "-h", 0
+
     flag_version            db "--version", 0
     flag_version_short      db "-v", 0
+
+    ; Error Messages
+    ; --------------
+
+    DEFINE_STR err_missing_value, "error: missing base value after flag", 0xA
+    DEFINE_STR err_invalid_char,  "error: invalid character for the specified base", 0xA
+    DEFINE_STR err_overflow,      "error: uint64 overflow. number too large!", 0xA
+    DEFINE_STR err_generic,       "error: something bad happened!", 0xA
 
     arg_from_base   dq 10
     arg_to_base     dq 2
@@ -139,14 +150,33 @@ _start:
             mov [rel arg_to_base], rax              ; Store the parsed base value in arg_to_base
             jmp .command_line_parse_next_arg
 
-        .missing_value_error:
-            PRINT parse_err_msg
-            EXIT EXIT_FAILURE
-
         .command_line_parse_next_arg:
             dec r12                                 ; Decrement the argument count
             add r13, 8                              ; Move to the next argument
             jmp .command_line_parse_loop            ; Repeat the loop
+
+        .missing_value_error:
+            PRINT err_missing_value
+            EXIT EXIT_FAILURE
+
+        .parse_error:
+            cmp rdx, 1                              ; Check if the error was due to an invalid character
+            je .invalid_char_error
+            cmp rdx, 2                              ; Check if the error was due to overflow
+            je .overflow_error
+
+            ; Fallback to a generic error message if the error code is unexpected
+            PRINT err_generic
+            EXIT EXIT_FAILURE                       
+
+            .invalid_char_error:
+                PRINT err_invalid_char
+                EXIT EXIT_FAILURE
+
+            .overflow_error:
+                PRINT err_overflow
+                EXIT EXIT_FAILURE
+
 
         .command_line_parse_done:
             ; After parsing all command-line arguments, check if the value to convert was provided
@@ -175,10 +205,6 @@ _start:
             WRITE STDOUT, newline, 1                ; Print a newline character
 
             EXIT EXIT_SUCCESS
-
-        .parse_error:
-            PRINT parse_err_msg                     ; Print the error message for invalid input
-            EXIT EXIT_FAILURE                       ; Exit with failure status
 
 print_usage:
     PRINT msg
