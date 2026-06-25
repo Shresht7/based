@@ -41,7 +41,7 @@ void print_help()
     printf("%s", HELP_MESSAGE);
 }
 
-const char *VERSION = "v0.2.0";
+const char *VERSION = "v0.3.0";
 
 void print_version()
 {
