@@ -55,6 +55,10 @@ section .text
     ; @returns rax: the parsed unsigned integer value
     ; @returns rdx: 0 on success, 1 on invalid character, 2 on overflow
     parse_uint:
+        ; If the value has a prefix (like 0x for hex, or 0b for binary), we need to detect the base and adjust the string pointer accordingly
+        ; detect_base will update rsi to the correct base and advance rdi if necessary
+        call detect_base
+
         xor rax, rax                ; Clear rax (the result aggregator)
         xor rdx, rdx                ; Clear rdx (error flag)
         xor r8, r8                  ; Clear r8 (the digit counter)
