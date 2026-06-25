@@ -4,29 +4,29 @@
 %include "tests/assert.asm"
 
 section .data
-    DEFINE_STR test_parse_decimal_str, "12345", 0           ; Define a null-terminated test string for parse_decimal
-    DEFINE_STR test_parse_invalid_str, "12G45", 0           ; Define a null-terminated test string for parse_decimal with an invalid character
+    DEFINE_STR test_parse_decimal_str,                        "12345", 0
+    DEFINE_STR test_parse_invalid_str,                        "12G45", 0
 
-    DEFINE_STR test_parse_hex_str, "1A3F", 0                ; Define a null-terminated test string for parse_hexadecimal
-    DEFINE_STR test_parse_invalid_hex_str, "3G", 0          ; Define a null-terminated test string for parse_hexadecimal with an invalid character
+    DEFINE_STR test_parse_hex_str,                            "1A3F", 0
+    DEFINE_STR test_parse_invalid_hex_str,                    "3G", 0
 
-    DEFINE_STR test_parse_octal_str, "755", 0               ; Define a null-terminated test string for parse_octal
-    DEFINE_STR test_parse_invalid_octal_str, "78", 0        ; Define a null-terminated test string for parse_octal with an invalid character
+    DEFINE_STR test_parse_octal_str,                          "755", 0
+    DEFINE_STR test_parse_invalid_octal_str,                  "78", 0
 
-    DEFINE_STR test_parse_binary_str, "1101", 0             ; Define a null-terminated test string for parse_binary
-    DEFINE_STR test_parse_invalid_binary_str, "1102", 0     ; Define a null-terminated test string for parse_binary with an invalid character
+    DEFINE_STR test_parse_binary_str,                         "1101", 0
+    DEFINE_STR test_parse_invalid_binary_str,                 "1102", 0
 
-    DEFINE_STR test_parse_overflow_str, "18446744073709551616", 0       ; Define a null-terminated test string for parse_uint that causes overflow (2^64)
-    DEFINE_STR test_parse_max_uint64_str, "18446744073709551615", 0     ; Define a null-terminated test string for parse_uint that is the maximum uint64 value (2^64 - 1)
+    DEFINE_STR test_parse_overflow_str,                       "18446744073709551616", 0
+    DEFINE_STR test_parse_max_uint64_str,                     "18446744073709551615", 0
 
-    DEFINE_STR test_detect_base_unspecified, "75", 0        ; Define a string for detect_base with unspecified base
-    DEFINE_STR test_detect_base_hexadecimal, "0xAF", 0      ; Define a hexadecimal string for detect_base
-    DEFINE_STR test_detect_base_octal, "0o755", 0           ; Define a octal string for detect_base
-    DEFINE_STR test_detect_base_binary, "0b11011", 0        ; Define a binary string for detect_base
-    DEFINE_STR test_detect_base_unspecified_unprefixed, "75", 0
-    DEFINE_STR test_detect_base_hexadecimal_unprefixed, "AF", 0
-    DEFINE_STR test_detect_base_octal_unprefixed, "755", 0
-    DEFINE_STR test_detect_base_binary_unprefixed, "11011", 0
+    DEFINE_STR test_detect_base_unspecified,                  "75", 0
+    DEFINE_STR test_detect_base_hexadecimal,                  "0xAF", 0
+    DEFINE_STR test_detect_base_octal,                        "0o755", 0
+    DEFINE_STR test_detect_base_binary,                       "0b11011", 0
+    DEFINE_STR test_detect_base_unspecified_unprefixed,       "75", 0
+    DEFINE_STR test_detect_base_hexadecimal_unprefixed,       "AF", 0
+    DEFINE_STR test_detect_base_octal_unprefixed,             "755", 0
+    DEFINE_STR test_detect_base_binary_unprefixed,            "11011", 0
 
 section .bss
         __test_number_buffer resb 96    ; Reserve 96 bytes for the test number buffer
@@ -110,6 +110,10 @@ _start:
     ; parse_uint max uint64
     ; ---------------------
 
+    ; FIXME: These tests fail because the parse_uint function is currently not capable of handling the maximum uint64 value correctly.
+    ; The function needs to be updated to handle this edge case. Exploring with gdb shows that `rax` overflows and wraps around to 0
+    ; when parsing the maximum uint64 value, which is incorrect behavior. 
+    
     ; TESTCASE "parse_uint should parse the maximum uint64 value correctly"
     ;     mov rdi, test_parse_max_uint64_str
     ;     mov rsi, 10
