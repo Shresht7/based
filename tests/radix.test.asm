@@ -40,6 +40,7 @@ _start:
         mov rsi, 10
         call parse_uint
         ASSERT_EQ rdx, 1, "should return error code 1 for invalid character 'G' in '12G45'"
+        ASSERT_EQ rax, 0, "should return 0 in rax for invalid character"
 
     ; parse_uint hexadecimal
     ; ----------------------
@@ -54,6 +55,7 @@ _start:
         mov rsi, 16
         call parse_uint
         ASSERT_EQ rdx, 1, "should return error code 1 for invalid character 'G' in '3G'"
+        ASSERT_EQ rax, 0, "should return 0 in rax for invalid character"
 
     ; parse_uint octal
     ; ----------------
@@ -68,6 +70,7 @@ _start:
         mov rsi, 8
         call parse_uint
         ASSERT_EQ rdx, 1, "should return error code 1 for invalid character '8' in '78'"
+        ASSERT_EQ rax, 0, "should return 0 in rax for invalid character"
 
     ; parse_uint binary
     ; -----------------
@@ -82,6 +85,7 @@ _start:
         mov rsi, 2
         call parse_uint
         ASSERT_EQ rdx, 1, "should return error code 1 for invalid character '2' in '1102'"
+        ASSERT_EQ rax, 0, "should return 0 in rax for invalid character"
 
     ; parse_uint overflow
     ; -------------------
@@ -91,6 +95,7 @@ _start:
         mov rsi, 10
         call parse_uint
         ASSERT_EQ rdx, 2, "should return error code 2 for overflow when parsing '18446744073709551616'"
+        ASSERT_EQ rax, 0, "should return 0 in rax for overflow"
 
     ; All tests passed, exit with status 0
     EXIT EXIT_SUCCESS

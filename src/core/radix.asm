@@ -72,10 +72,12 @@ section .text
             jmp .loop               ; Repeat the loop
 
     .invalid_char:
+        xor rax, rax            ; Clear rax (the result)
         mov rdx, 1              ; Set error flag to 1 (invalid character)
         jmp .done               ; Exit the loop
 
     .overflow:
+        xor rax, rax            ; Clear rax (the result)
         mov rdx, 2              ; Set error flag to 2 (overflow)
         jmp .done               ; Exit the loop
 
