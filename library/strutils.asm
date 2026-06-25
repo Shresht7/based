@@ -18,6 +18,35 @@ section .text
         .strlen_done:
             ret                             ; Return from the function, with rax containing the length of the string
 
+    ; strcmp(rdi: *str1, rsi: *str2) -> rax: result
+    ; Compares two null-terminated strings.
+    ;
+    ; @param rdi: pointer to the first null-terminated string
+    ; @param rsi: pointer to the second null-terminated string
+    ; @return rax: 0 if the strings are equal, a negative value if str1 < str2, and a positive value if str1 > str2
+    strcmp:
+        xor rax, rax                    ; Clear rax to use it as a result accumulator
+        .strcmp_loop:
+            mov al, byte [rdi]              ; Load the current byte of str1 into al
+            mov bl, byte [rsi]              ; Load the current byte of str2 into bl
+            cmp al, bl                      ; Compare the two bytes
+            jl .strcmp_less                 ; If str1 < str2, jump to the `.strcmp_less` label
+            jg .strcmp_greater              ; If str1 > str2, jump to the `.strcmp_greater` label
+            test al, al                     ; Check if we reached the null terminator of str1 (and str2, since they are equal so far)
+            je .strcmp_equal                 ; If we reached the null terminator, the strings are equal, jump to the `.strcmp_equal` label
+            inc rdi                         ; Move to the next byte in str1
+            inc rsi                         ; Move to the next byte in str2
+            jmp .strcmp_loop                ; Jump back to the start of the loop for the next comparison
+        .strcmp_less:
+            mov rax, -1                     ; Set rax to -1 to indicate str1 < str2
+            ret                             
+        .strcmp_greater:
+            mov rax, 1                      ; Set rax to 1 to indicate str1 > str2
+            ret                             
+        .strcmp_equal:
+            xor rax, rax                    ; Set rax to 0 to indicate str1 == str2
+            ret  
+
     ; itoa(rdi: int, rsi: *buffer) -> rax: pointer to the null-terminated string
     ; Converts an integer to a null-terminated string.
     ;
