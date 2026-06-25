@@ -4,10 +4,25 @@
 %include "src/core/radix.asm"
 
 section .data
-    DEFINE_STR VERSION, "v0.1.0", 0                 ; Define a null-terminated string for the version number
 
-    msg db "usage: based <value>", 10               ; message to print, followed by a newline character
-    msg_len equ $ - msg                             ; calculate the length of the message. `$` means current address, so `$ - msg` gives the length of the message in bytes
+    DEFINE_STR NAME,    "based"     , 0
+    DEFINE_STR VERSION, "v0.1.0"    , 0
+
+    ; Help / Usage Message
+    ; --------------------
+
+    HELP db "Usage: based [options] <value>"                                                                 , 0xA
+            db ""                                                                                           , 0xA
+            db "Options:"                                                                                   , 0xA
+            db "  -f, --from, --from-base <base>   Source base (default: 10)"                               , 0xA
+            db "  -t, --to, --to-base <base>       Target base (default: 2)"                                , 0xA
+            db "  -h, --help                       Show this help message"                                  , 0xA
+            db "  -v, --version                    Show version information"                                , 0xA
+            db ""                                                                                           , 0xA
+            db "Notes:"                                                                                     , 0xA
+            db "  Prefixes 0x (hex), 0b (bin), and 0o (oct) are automatically detected from the value"      , 0xA
+        HELP_len equ $ - HELP
+
 
     ; Flags / Options
     ; ---------------
@@ -207,7 +222,7 @@ _start:
             EXIT EXIT_SUCCESS
 
 print_usage:
-    PRINT msg
+    PRINT HELP
     EXIT EXIT_SUCCESS
 
 print_version:
