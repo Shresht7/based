@@ -33,6 +33,8 @@ Notes:
 
 #### Examples
 
+Examples below assume the C wrapper frontend, since it exposes the fuller CLI.
+
 ```sh
 ./based --from 10 --to 16 175
 # AF
@@ -40,8 +42,17 @@ Notes:
 ./based --from decimal --to hex 175
 # AF
 
+./based -f hex -t dec FF
+# 255
+
+./based --from-base octal --to-base binary 77
+# 111111
+
 ./based --from 2 --to 10 1011 1111 --delimiter ", "
 # 11, 15
+
+printf "FF A\n" | ./based --from hex --to decimal --delimiter ":"
+# 255:10
 
 printf "0xFF\n0b1010\n" | ./based --to 10
 # 255
@@ -157,6 +168,7 @@ What it covers today:
 
 - unit tests for `parse_uint`, `format_uint`, and `detect_base`
 - integration tests for the pure assembly CLI
+- integration tests for the C wrapper CLI, including named base aliases, delimiter handling, and stdin batch conversion
 
 The test script is shell-based and primarily aimed at Unix-like environments.
 
