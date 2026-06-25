@@ -22,8 +22,9 @@ _start:
     jl .usage           ; if less than 2, jump to usage message
 
     mov rdi, [rsp+16]       ; load the pointer to the first argument (argv[1]) into rdi
-    call parse_decimal      ; parse the first argument (argv[1]) as a decimal number, result in rax
-    test rdx, rdx           ; check the status returned by parse_decimal (rdx = 0 means success, rdx = 1 means invalid input)
+    mov rsi, 10             ; set the base to 10 for decimal parsing
+    call parse_uint         ; parse the first argument (argv[1]) as a decimal number, result in rax
+    test rdx, rdx           ; check the status returned by parse_uint (rdx = 0 means success, rdx = 1 means invalid input)
     jnz .parse_error        ; if rdx is not zero, jump to parse_error
 
     ; Exit with decimal for testing
