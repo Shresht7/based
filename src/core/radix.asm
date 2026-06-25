@@ -1,11 +1,6 @@
 %ifndef RADIX_ASM
 %define RADIX_ASM
 
-section .bss
-    ; We need the space for a base-2 representation of the max uint64: i.e. 64 bits
-    ; +1 for null terminator
-    radix_buffer resb 65
-
 section .text
 
     ; parse_uint
@@ -90,12 +85,13 @@ section .text
     ; Formats a uint64 value into a string representation in a given base (2-16)
     ;
     ; @param rdi: the uint64 value to format
-    ; @param rsi: base (2-16)
+    ; @param rsi: pointer to the buffer where the formatted string will be stored
+    ; @param rdx: base (2-16)
     ; @returns rax: pointer to the formatted string (null-terminated)
     format_uint:
         mov rax, rdi                    ; Move the number to be formatted into rax
-        mov r9, rsi                     ; Move the base into r9
-        lea r10, [radix_buffer + 64]    ; Point r10 to the end of the buffer
+        mov r9, rdx                     ; Move the base into r9
+        lea r10, [rsi + 64]             ; Point r10 to the end of the buffer
         mov byte [r10], 0               ; Null-terminate the string
 
         test rax, rax

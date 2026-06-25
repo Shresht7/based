@@ -22,6 +22,10 @@ section .data
 section .bss
     arg_value       resq 1
 
+    ; We need the space for a base-2 representation of the max uint64: i.e. 64 bits
+    ; +1 for null terminator
+    radix_buffer resb 65
+
 section .text
 ; The main entry-point of the program
 global _start
@@ -121,7 +125,8 @@ _start:
             jne .parse_error                        ; If there was an error, jump to parse_error
 
             mov rdi, rax                            ; Move the parsed value into rdi for formatting
-            mov rsi, [rel arg_to_base]              ; Load the target base into rsi
+            lea rsi, [rel radix_buffer]             ; Load the address of the buffer to store the formatted string
+            mov rdx, [rel arg_to_base]              ; Load the target base into rdx
             call format_uint                        ; Format the value into the target base
 
             mov rdi, rax                            ; Move the pointer to the formatted string into rdi
