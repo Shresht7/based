@@ -10,11 +10,13 @@ Usage: based [options] <value>
 Options:
   -f, --from, --from-base <base>   Source base (default: 10)
   -t, --to, --to-base <base>       Target base (default: 2)
+  -d, --delimiter <delimiter>      Delimiter for multiple values (default: newline)
   -h, --help                       Show this help message
   -v, --version                    Show version information
 
 Notes:
   Prefixes 0x (hex), 0b (bin), and 0o (oct) are automatically detected from the value
+
 ```
 
 ### Examples
