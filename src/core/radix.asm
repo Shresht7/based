@@ -1,6 +1,12 @@
 %ifndef RADIX_ASM
 %define RADIX_ASM
 
+; If the output format is win64, define WIN64_ABI
+; to handle diverging ABI calling conventions between Windows and Unix-like systems
+%ifidn __OUTPUT_FORMAT__, win64
+    %define WIN64_ABI
+%endif
+
 section .text
     global detect_base
     global parse_uint
@@ -14,6 +20,11 @@ section .text
     ; @returns rdi: pointer to the string representation advanced by 2 characters
     ; @returns rsi: Updates the rsi to the correct base
     detect_base:
+
+%ifdef WIN64_ABI
+        mov rdi, rcx                ; linux's arg1 (rdi) <- windows' arg1 (rcx)
+        mov rsi, rdx                ; linux's arg2 (rsi) <- windows' arg2 (rdx)
+%endif
         mov cx, word [rdi]          ; Peek at the first two characters
 
         cmp cx, '0x'                ; If the prefix is '0x'
@@ -40,6 +51,12 @@ section .text
             ret
 
         .no_match:
+
+%ifdef WIN64_ABI
+        mov rcx, rdi                ; reflect updated pointer/base back to Win64 ABI regs
+        mov rdx, rsi                ; (only matters if a Win64 *C caller* calls this directly)
+%endif
+
             ; mov rsi, 10             ; Override the base to 10
             ; No need to advance the pointer since there's no prefix
 
@@ -58,6 +75,14 @@ section .text
     ; @returns rax: the parsed unsigned integer value
     ; @returns rdx: 0 on success, 1 on invalid character, 2 on overflow
     parse_uint:
+
+%ifdef WIN64_ABI
+        push rdi                    ; rdi/rsi are callee-saved on Win64. must preserve
+        push rsi
+        mov rdi, rcx                ; linux's arg1 (rdi) <- windows' arg1 (rcx)
+        mov rsi, rdx                ; linux's arg2 (rsi) <- windows' arg2 (rdx)
+%endif
+
         ; If the value has a prefix (like 0x for hex, or 0b for binary), we need to detect the base and adjust the string pointer accordingly
         ; detect_base will update rsi to the correct base and advance rdi if necessary
         call detect_base
@@ -127,6 +152,12 @@ section .text
         jmp .done               ; Exit the loop
 
     .done:
+
+%ifdef WIN64_ABI
+        pop rsi                 ; Restore rsi
+        pop rdi                 ; Restore rdi
+%endif
+
         ret                     ; Return with rax = result, rdx = error flag
 
     
@@ -139,6 +170,13 @@ section .text
     ; @param rdx: base (2-16)
     ; @returns rax: pointer to the formatted string (null-terminated)
     format_uint:
+
+%ifdef WIN64_ABI
+        mov rdi, rcx                    ; linux's arg1 (rdi) <- windows' arg1 (rcx)
+        mov rsi, rdx                    ; linux's arg2 (rsi) <- windows' arg2 (rdx)
+        mov rdx, r8                     ; linux's arg3 (rdx) <- windows' arg3 (r8)
+%endif
+
         mov rax, rdi                    ; Move the number to be formatted into rax
         mov r9, rdx                     ; Move the base into r9
         lea r10, [rsi + 64]             ; Point r10 to the end of the buffer
