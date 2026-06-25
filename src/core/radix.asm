@@ -2,7 +2,10 @@
 %define RADIX_ASM
 
 section .text
-    
+    global detect_base
+    global parse_uint
+    global format_uint
+
     ; detect_base
     ; 
     ; Peeks at the string representation at rdi and updates the base (rsi) if necessary
