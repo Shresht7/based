@@ -95,6 +95,22 @@ chmod +x ./based
 ./based --help
 ```
 
+### Windows
+
+Cursed
+
+Compile the [`radix.asm`](./src/core/radix.asm) file with the `win64` output format:
+
+```sh
+nasm -f win64 ./src/based.asm -o ./build/based.obj
+```
+
+Then let `gcc` handle the rest:
+
+```sh
+gcc ./src/based.c ./build/based.obj -o ./based.exe
+```
+
 ---
 
 ## 📄 License
