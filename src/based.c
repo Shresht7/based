@@ -13,9 +13,10 @@
 // FOREIGN FUNCTION INTERFACE
 // --------------------------
 
-// The following functions are implemented in assembly and are linked with this C code.
-// Following the System V AMD64 ABI calling convention, the first six integer or pointer arguments are passed in registers RDI, RSI, RDX, RCX, R8, and R9.
-// The return value is placed in RAX.
+// The following functions are implemented in assembly and linked with this C code.
+// Internally, the radix routines are written around the System V AMD64 register
+// convention. When assembled for win64, the assembly shim in radix.asm remaps the
+// incoming Win64 registers so these function signatures still work from C.
 
 // Maps to: parse_uint(rdi: *str, rsi: uint64_t base) -> rax: uint64_t parsed_value
 extern uint64_t parse_uint(const char *str, uint64_t base);
@@ -26,7 +27,7 @@ extern char *format_uint(uint64_t value, char *buffer, uint64_t base);
 // HELP
 // ----
 
-const char *HELP_MESSAGE = "Usage: based [options] <value>\n"
+const char *HELP_MESSAGE = "Usage: based [options] [value ...]\n"
                            "\n"
                            "Options:\n"
                            "  -f, --from, --from-base <base>   Source base (default: 10)\n"
@@ -36,7 +37,8 @@ const char *HELP_MESSAGE = "Usage: based [options] <value>\n"
                            "  -v, --version                    Show version information\n"
                            "\n"
                            "Notes:\n"
-                           "  Prefixes 0x (hex), 0b (bin), and 0o (oct) are automatically detected from the value\n";
+                           "  Prefixes 0x (hex), 0b (bin), and 0o (oct) are automatically detected from the value\n"
+                           "  If no value is provided, numbers may be read from stdin\n";
 
 void print_help()
 {
@@ -74,7 +76,7 @@ void convert(const char *input, uint64_t from_base, uint64_t to_base)
     printf("%s", formatted_number);
 }
 
-/// @brief Converts a single number from one base to another and prints the result to stdout.
+/// @brief Reads numbers from stdin, converts them, and prints them to stdout.
 /// @param from_base The base of the input number.
 /// @param to_base The base to convert the number to.
 /// @param delimiter The delimiter to use between converted numbers.
@@ -128,7 +130,7 @@ void convert_stdin(uint64_t from_base, uint64_t to_base, const char *delimiter)
 
 /// @brief Converts a base name string to its corresponding integer base value.
 /// @param base_str The base name string (e.g., "bin", "oct", "dec", "hex") or an integer string representing the base.
-/// @return The corresponding integer base value (2, 8, 10, 16) or the integer value of the base if it's between 2 and 36. Exits with an error if the base is invalid.
+/// @return The corresponding integer base value (2, 8, 10, 16) or the integer value of the base if it's between 2 and 16. Exits with an error if the base is invalid.
 int base_from_string(const char *base_str)
 {
     if (strcmp(base_str, "bin") == 0 || strcmp(base_str, "binary") == 0 || strcmp(base_str, "b") == 0)
@@ -151,13 +153,13 @@ int base_from_string(const char *base_str)
     {
         // If the string is not a recognized base name, try to convert it to an integer
         int base = atoi(base_str);
-        if (base >= 2 && base <= 36)
+        if (base >= 2 && base <= 16)
         {
             return base; // Return the integer base if it's valid
         }
         else
         {
-            fprintf(stderr, "Error: Invalid base '%s'. Supported bases are: bin, oct, dec, hex or any integer between 2 and 36.\n", base_str);
+            fprintf(stderr, "Error: Invalid base '%s'. Supported bases are: bin, oct, dec, hex or any integer between 2 and 16.\n", base_str);
             exit(EXIT_FAILURE); // Exit with an error code for invalid base
         }
     }
@@ -169,7 +171,7 @@ int base_from_string(const char *base_str)
 // The main entrypoint of the application
 int main(int argc, char *argv[])
 {
-    // Check if the user provided any argumets at all
+    // Check if the user provided any arguments at all
     if (argc < 2)
     {
         print_help();
@@ -180,8 +182,6 @@ int main(int argc, char *argv[])
     uint64_t from_base = 10; // Decimal
     uint64_t to_base = 2;    // Binary
     char *delimiter = "\n";  // Default delimiter is a newline character
-    char *target_number = NULL;
-
     // Define Command Line Options
     struct option long_options[] = {
         {"from", required_argument, 0, 'f'},

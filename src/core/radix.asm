@@ -1,8 +1,8 @@
 %ifndef RADIX_ASM
 %define RADIX_ASM
 
-; If the output format is win64, define WIN64_ABI
-; to handle diverging ABI calling conventions between Windows and Unix-like systems
+; If the output format is win64, define WIN64_ABI so the shared radix
+; routines can adapt to the Windows x64 calling convention.
 %ifidn __OUTPUT_FORMAT__, win64
     %define WIN64_ABI
 %endif
@@ -22,8 +22,8 @@ section .text
     detect_base:
 
 %ifdef WIN64_ABI
-        mov rdi, rcx                ; linux's arg1 (rdi) <- windows' arg1 (rcx)
-        mov rsi, rdx                ; linux's arg2 (rsi) <- windows' arg2 (rdx)
+        mov rdi, rcx                ; map Win64 arg1 (rcx) to the System V-style register flow
+        mov rsi, rdx                ; map Win64 arg2 (rdx) to the System V-style register flow
 %endif
         mov cx, word [rdi]          ; Peek at the first two characters
 
@@ -53,8 +53,8 @@ section .text
         .no_match:
 
 %ifdef WIN64_ABI
-        mov rcx, rdi                ; reflect updated pointer/base back to Win64 ABI regs
-        mov rdx, rsi                ; (only matters if a Win64 *C caller* calls this directly)
+        mov rcx, rdi                ; reflect updated pointer back to Win64 ABI regs
+        mov rdx, rsi                ; reflect updated base back to Win64 ABI regs
 %endif
 
             ; mov rsi, 10             ; Override the base to 10
@@ -77,10 +77,10 @@ section .text
     parse_uint:
 
 %ifdef WIN64_ABI
-        push rdi                    ; rdi/rsi are callee-saved on Win64. must preserve
+        push rdi                    ; rdi/rsi are callee-saved on Win64, so preserve them
         push rsi
-        mov rdi, rcx                ; linux's arg1 (rdi) <- windows' arg1 (rcx)
-        mov rsi, rdx                ; linux's arg2 (rsi) <- windows' arg2 (rdx)
+        mov rdi, rcx                ; map Win64 arg1 (rcx) to the System V-style register flow
+        mov rsi, rdx                ; map Win64 arg2 (rdx) to the System V-style register flow
 %endif
 
         ; If the value has a prefix (like 0x for hex, or 0b for binary), we need to detect the base and adjust the string pointer accordingly
@@ -172,9 +172,9 @@ section .text
     format_uint:
 
 %ifdef WIN64_ABI
-        mov rdi, rcx                    ; linux's arg1 (rdi) <- windows' arg1 (rcx)
-        mov rsi, rdx                    ; linux's arg2 (rsi) <- windows' arg2 (rdx)
-        mov rdx, r8                     ; linux's arg3 (rdx) <- windows' arg3 (r8)
+        mov rdi, rcx                    ; map Win64 arg1 (rcx) to the System V-style register flow
+        mov rsi, rdx                    ; map Win64 arg2 (rdx) to the System V-style register flow
+        mov rdx, r8                     ; map Win64 arg3 (r8) to the System V-style register flow
 %endif
 
         mov rax, rdi                    ; Move the number to be formatted into rax
