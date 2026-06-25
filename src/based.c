@@ -115,6 +115,8 @@ int main(int argc, char *argv[])
     // Parse the input number from the specified base
     uint64_t parsed_number = parse_uint(target_number, from_base);
 
+    // TODO: Handle parsing errors (e.g., invalid characters for the base, overflow, etc.)
+
     // Create a 65-byte buffer to hold the binary representation of a 64-bit number (64 bits + null terminator) on the C stack
     char output_buffer[65];
 
