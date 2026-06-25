@@ -17,10 +17,12 @@ done
 # Run tests
 for test_file in "$BUILD"/*.test; do
     echo "Running test: $test_file"
-    "$test_file"
-    if [ $? -eq 0 ]; then
-        echo -e "\nTest passed: $test_file ✅"
+    OUTPUT=$("$test_file")
+    echo "$OUTPUT"
+    if echo "$OUTPUT" | grep -q "FAIL"; then
+        echo -e "\nTests failed: $test_file ❌"
+        exit 1
     else
-        echo -e "\nTest failed: $test_file ❌"
+        echo -e "\nTests passed: $test_file ☑️"
     fi
 done
